@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Operations & General Expense</title>
+  <!-- Tailwind CSS & FontAwesome Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Navigasi Header -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-indigo-600 rounded-lg">
+          <i class="fa-solid fa-chart-pie text-xl"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight">Operations Expense Hub</h1>
+          <p class="text-xs text-slate-400">General Expense & Operational Tracking</p>
+        </div>
+      </div>
+      
+      <!-- Navigasi Tab -->
+      <nav class="flex space-x-2">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-indigo-600 text-white flex items-center gap-2">
+          <i class="fa-solid fa-gauge"></i> Dashboard
+        </button>
+        <button onclick="switchTab('form')" id="nav-form" class="px-4 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-plus-circle"></i> Input Data
+        </button>
+        <button onclick="switchTab('table')" id="nav-table" class="px-4 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-list-check"></i> Riwayat Transaksi
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Konten Utama -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-5 right-5 z-50 px-5 py-3 rounded-xl shadow-xl text-white flex items-center gap-3 transition-all duration-300">
+      <i id="toast-icon" class="fa-solid"></i>
+      <span id="toast-message" class="text-sm font-medium"></span>
+    </div>
+
+    <!-- TAB 1: DASHBOARD -->
+    <section id="tab-dashboard" class="space-y-6">
+      
+      <!-- Kartu Ringkasan KPI -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Pengeluaran</p>
+            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="kpi-total-expense">Rp 0</h3>
+          </div>
+          <div class="p-3 bg-red-100 text-red-600 rounded-xl">
+            <i class="fa-solid fa-wallet text-xl"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Transaksi</p>
+            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="kpi-total-count">0</h3>
+          </div>
+          <div class="p-3 bg-blue-100 text-blue-600 rounded-xl">
+            <i class="fa-solid fa-receipt text-xl"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Rata-rata Transaksi</p>
+            <h3 class="text-2xl font-bold text-slate-900 mt-1" id="kpi-avg-expense">Rp 0</h3>
+          </div>
+          <div class="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+            <i class="fa-solid fa-calculator text-xl"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Kategori Terbesar</p>
+            <h3 class="text-base font-bold text-slate-900 mt-1 truncate max-w-[160px]" id="kpi-top-category">-</h3>
+          </div>
+          <div class="p-3 bg-amber-100 text-amber-600 rounded-xl">
+            <i class="fa-solid fa-tags text-xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Area Chart Visualisasi -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Chart Tren Bulanan -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 lg:col-span-2">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-indigo-600"></i> Tren Pengeluaran Bulanan
+            </h3>
+            <button onclick="refreshData()" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
+              <i class="fa-solid fa-rotate-right"></i> Refresh Data
+            </button>
+          </div>
+          <div class="relative h-72">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart Breakdown Kategori -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+              <i class="fa-solid fa-chart-pie text-indigo-600"></i> Alokasi Kategori
+            </h3>
+          </div>
+          <div class="relative h-72 flex justify-center items-center">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 2: FORM INPUT DATA -->
+    <section id="tab-form" class="hidden max-w-3xl mx-auto">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
+        <div class="border-b border-slate-200 pb-4 mb-6">
+          <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-pen-to-square text-indigo-600"></i> Form Catat Pengeluaran Baru
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">Data yang diinput otomatis tersimpan ke Google Sheets.</p>
+        </div>
+
+        <form id="expenseForm" onsubmit="handleFormSubmit(event)" class="space-y-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1">Tanggal Transaksi *</label>
+              <input type="date" id="form-date" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1">Partner / Vendor *</label>
+              <input type="text" id="form-partner" placeholder="Contoh: PT Wooden Fish Village / Daily Workers" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Deskripsi / Label Transaksi *</label>
+            <input type="text" id="form-label" placeholder="Contoh: Rental Genset Alpha Wolf / Pembelian Alat Kantor" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1">Kategori Akun (Account) *</label>
+              <select id="form-account" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white">
+                <option value="">-- Pilih Kategori GL --</option>
+                <option value="WFV61600001 Office Consumable Expense">Office Consumable Expense</option>
+                <option value="WFV61100003 Daily Worker Expense">Daily Worker Expense</option>
+                <option value="WFV62400106 Other General and Administration Expense">Other General & Admin Expense</option>
+                <option value="WFV61500001 Consultant & Professional Fee">Consultant & Professional Fee</option>
+                <option value="WFV61700001 Electricty and Water Expense">Electricity & Water Expense</option>
+                <option value="WFV62100003 Transport Expense">Transport Expense</option>
+                <option value="Services & Maintenance">Services & Maintenance</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1">Nominal / Debit (IDR) *</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-slate-400 font-medium text-sm">Rp</span>
+                <input type="number" id="form-amount" min="0" step="any" placeholder="0" required class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1">Summary Category</label>
+              <select id="form-summaryCat" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white">
+                <option value="Services">Services</option>
+                <option value="Salaries">Salaries</option>
+                <option value="Consumables">Consumables</option>
+                <option value="Travel">Travel</option>
+                <option value="Rental">Rental</option>
+                <option value="Subscription">Subscription</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1">Summary Type</label>
+              <select id="form-summaryType" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white">
+                <option value="Operating Expenditures">Operating Expenditures</option>
+                <option value="Internal Service">Internal Service</option>
+                <option value="Capital Expenditure">Capital Expenditure</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Catatan / Referensi</label>
+            <textarea id="form-note" rows="2" placeholder="Nomor SO/PO, rujukan proyek, atau catatan lainnya..." class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"></textarea>
+          </div>
+
+          <div class="pt-3 flex justify-end gap-3">
+            <button type="reset" class="px-5 py-2.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 text-sm font-semibold transition">
+              Reset
+            </button>
+            <button type="submit" id="btn-submit" class="px-6 py-2.5 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 text-sm font-semibold shadow-md transition flex items-center gap-2">
+              <i class="fa-solid fa-paper-plane"></i> Simpan Data
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 3: RIWAYAT TRANSAKSI -->
+    <section id="tab-table" class="hidden space-y-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+          <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+            <i class="fa-solid fa-receipt text-indigo-600"></i> Transaksi Terbaca dari Google Sheets
+          </h3>
+          <div class="w-full md:w-80 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Cari vendor, deskripsi, akun..." class="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm">
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-lg border border-slate-200">
+          <table class="w-full text-left text-sm text-slate-600">
+            <thead class="bg-slate-800 text-white text-xs uppercase tracking-wider">
+              <tr>
+                <th class="px-4 py-3">ID / Reference</th>
+                <th class="px-4 py-3">Tanggal</th>
+                <th class="px-4 py-3">Partner / Vendor</th>
+                <th class="px-4 py-3">Deskripsi / Label</th>
+                <th class="px-4 py-3">Kategori</th>
+                <th class="px-4 py-3 text-right">Debit / Nominal (IDR)</th>
+              </tr>
+            </thead>
+            <tbody id="transactionTableBody" class="divide-y divide-slate-200">
+              <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-slate-400">
+                  <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+                  <p>Memuat data transaksi dari spreadsheet...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    let trendChartInstance = null;
+    let categoryChartInstance = null;
+    let cachedData = null;
+
+    // Inisialisasi awal
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('form-date').valueAsDate = new Date();
+      refreshData();
+    });
+
+    // Pindah Tab Navigasi
+    function switchTab(tabName) {
+      ['dashboard', 'form', 'table'].forEach(t => {
+        const section = document.getElementById(`tab-${t}`);
+        const navBtn = document.getElementById(`nav-${t}`);
+        if (t === tabName) {
+          section.classList.remove('hidden');
+          navBtn.className = "px-4 py-2 rounded-lg text-sm font-medium transition bg-indigo-600 text-white flex items-center gap-2";
+        } else {
+          section.classList.add('hidden');
+          navBtn.className = "px-4 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 flex items-center gap-2";
+        }
+      });
+    }
+
+    // Format Rupiah
+    function formatIDR(value) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
+    }
+
+    // Ambil Data dari Backend Apps Script
+    function refreshData() {
+      google.script.run
+        .withSuccessHandler(renderDashboard)
+        .withFailureHandler(err => showToast('Gagal memuat data: ' + err.message, false))
+        .getDashboardData();
+    }
+
+    // Render Dashboard Utama
+    function renderDashboard(data) {
+      cachedData = data;
+
+      // Update Angka KPI
+      document.getElementById('kpi-total-expense').innerText = formatIDR(data.summary.totalExpense);
+      document.getElementById('kpi-total-count').innerText = data.summary.totalCount;
+      document.getElementById('kpi-avg-expense').innerText = formatIDR(data.summary.avgExpense);
+      document.getElementById('kpi-top-category').innerText = data.summary.topCategory;
+
+      // Render Visualisasi Charts
+      renderTrendChart(data.monthlyTrend);
+      renderCategoryChart(data.categoryData);
+
+      // Render Tabel Transaksi
+      renderTable(data.recentTransactions);
+    }
+
+    // Line Chart: Tren Pengeluaran Bulanan
+    function renderTrendChart(trendData) {
+      const ctx = document.getElementById('trendChart').getContext('2d');
+      if (trendChartInstance) trendChartInstance.destroy();
+
+      trendChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: trendData.labels,
+          datasets: [{
+            label: 'Total Pengeluaran (IDR)',
+            data: trendData.values,
+            borderColor: '#4F46E5',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            fill: true,
+            tension: 0.3,
+            borderWidth: 2,
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              ticks: {
+                callback: function(value) { 
+                  if (value >= 1000000000) return 'Rp ' + (value / 1000000000).toFixed(1) + ' M';
+                  if (value >= 1000000) return 'Rp ' + (value / 1000000).toFixed(0) + ' Jt';
+                  return 'Rp ' + value;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Doughnut Chart: Breakdown Per Kategori
+    function renderCategoryChart(catData) {
+      const ctx = document.getElementById('categoryChart').getContext('2d');
+      if (categoryChartInstance) categoryChartInstance.destroy();
+
+      const bgColors = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#64748B', '#EC4899', '#3B82F6'];
+
+      categoryChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: catData.labels,
+          datasets: [{
+            data: catData.values,
+            backgroundColor: bgColors.slice(0, catData.labels.length)
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+          }
+        }
+      });
+    }
+
+    // Render Tabel Transaksi
+    function renderTable(transactions) {
+      const tbody = document.getElementById('transactionTableBody');
+      if (!transactions || transactions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-slate-400">Tidak ada transaksi ditemukan di spreadsheet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = transactions.map(t => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-4 py-3 font-mono text-xs text-indigo-600 font-semibold">${t.id}</td>
+          <td class="px-4 py-3 whitespace-nowrap">${t.date}</td>
+          <td class="px-4 py-3 font-medium text-slate-800">${t.partner}</td>
+          <td class="px-4 py-3 max-w-xs truncate" title="${t.label}">${t.label}</td>
+          <td class="px-4 py-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">${t.category}</span></td>
+          <td class="px-4 py-3 text-right font-semibold text-slate-900">${formatIDR(t.amount)}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Fitur Pencarian Tabel
+    function filterTable() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      if (!cachedData) return;
+      
+      const filtered = cachedData.recentTransactions.filter(t => 
+        t.partner.toLowerCase().includes(query) ||
+        t.label.toLowerCase().includes(query) ||
+        t.category.toLowerCase().includes(query) ||
+        t.id.toLowerCase().includes(query)
+      );
+      renderTable(filtered);
+    }
+
+    // Submit Form Pengeluaran Baru
+    function handleFormSubmit(event) {
+      event.preventDefault();
+      
+      const btn = document.getElementById('btn-submit');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+
+      const formData = {
+        date: document.getElementById('form-date').value,
+        partner: document.getElementById('form-partner').value,
+        label: document.getElementById('form-label').value,
+        account: document.getElementById('form-account').value,
+        amount: document.getElementById('form-amount').value,
+        summaryCategory: document.getElementById('form-summaryCat').value,
+        summaryType: document.getElementById('form-summaryType').value,
+        note: document.getElementById('form-note').value
+      };
+
+      google.script.run
+        .withSuccessHandler(res => {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Simpan Data`;
+          
+          if (res.success) {
+            showToast(res.message, true);
+            document.getElementById('expenseForm').reset();
+            document.getElementById('form-date').valueAsDate = new Date();
+            refreshData();
+            switchTab('dashboard');
+          } else {
+            showToast(res.message, false);
+          }
+        })
+        .withFailureHandler(err => {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Simpan Data`;
+          showToast('Error: ' + err.message, false);
+        })
+        .addExpenseData(formData);
+    }
+
+    // Toast Notifikasi
+    function showToast(message, isSuccess = true) {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      const msg = document.getElementById('toast-message');
+
+      msg.innerText = message;
+      if (isSuccess) {
+        toast.className = "fixed bottom-5 right-5 z-50 px-5 py-3 rounded-xl shadow-xl text-white flex items-center gap-3 bg-emerald-600";
+        icon.className = "fa-solid fa-circle-check text-lg";
+      } else {
+        toast.className = "fixed bottom-5 right-5 z-50 px-5 py-3 rounded-xl shadow-xl text-white flex items-center gap-3 bg-rose-600";
+        icon.className = "fa-solid fa-circle-exclamation text-lg";
+      }
+
+      toast.classList.remove('hidden');
+      setTimeout(() => { toast.classList.add('hidden'); }, 3500);
+    }
+  </script>
+</body>
+</html>
